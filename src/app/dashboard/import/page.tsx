@@ -101,6 +101,7 @@ export default function ImportPage() {
         try {
           const res = await importContacts({
             tenantId: "jd74m0v0h9xkzr3w2qj4m0v0h9xkzr3" as any, // MOCK
+            token: "MOCK_TOKEN", // MOCK
             fileName: file!.name,
             contacts: chunk,
           });

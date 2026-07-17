@@ -76,5 +76,33 @@ export default defineSchema({
     email: v.string(),
     passwordHash: v.optional(v.string()),
     image: v.optional(v.string()),
+    totpEnabled: v.optional(v.boolean()),
+    role: v.optional(v.string()),
+    tenantId: v.optional(v.id("tenants")),
+    lastLoginAt: v.optional(v.number()),
   }).index("by_email", ["email"]),
+
+  auth_sessions: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    expiresAt: v.number(),
+  }).index("by_token", ["token"]),
+
+  tenants: defineTable({
+    name: v.string(),
+    licensedModules: v.optional(v.array(v.string())),
+    planTier: v.optional(v.string()),
+    billingStatus: v.optional(v.string()),
+    senderId: v.optional(v.string()),
+  }),
+
+  audit_log: defineTable({
+    actorId: v.id("users"),
+    tenantId: v.optional(v.id("tenants")),
+    action: v.string(),
+    entityType: v.string(),
+    entityId: v.optional(v.union(v.id("users"), v.id("campaigns"), v.id("agents"), v.id("submissions"), v.id("contacts"), v.id("smsCampaigns"), v.id("smsLogs"))),
+    hash: v.optional(v.string()),
+    timestamp: v.optional(v.number()),
+  }).index("by_tenant", ["tenantId"]),
 });

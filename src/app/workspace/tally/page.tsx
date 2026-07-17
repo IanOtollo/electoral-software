@@ -265,7 +265,7 @@ export default function TallyDashboard() {
          });
       }
       invalid += (sub.results.invalidVotes || 0);
-      uniqueStations.add(sub.stationId);
+      uniqueStations.add(sub.stationCode);
       if (sub.status === "FLAGGED") anomalies++;
     });
 

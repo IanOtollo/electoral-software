@@ -3,7 +3,7 @@
 import { useState, use } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { Loader2, Send, Lock, ShieldCheck, MapPin } from "lucide-react";
+import { Loader2, Send, Lock, ShieldCheck, MapPin, CheckCircle } from "lucide-react";
 
 export default function AgentUploadPortal({ params }: { params: Promise<{ token: string }> }) {
   const unwrappedParams = use(params);
@@ -126,7 +126,7 @@ export default function AgentUploadPortal({ params }: { params: Promise<{ token:
     setIsSubmitting(true);
     try {
       // Build the dynamic array of votes
-      const votesArray = activeCampaign.candidates?.map((c: string) => ({
+      const votesArray = activeCampaign?.candidates?.map((c: string) => ({
         name: c,
         votes: parseInt(candidateVotes[c] || "0", 10)
       })) || [];
