@@ -29,7 +29,7 @@ export default function WorkspaceLayout({ children }: { children: ReactNode }) {
             <div className="w-8 h-8 bg-slate-900 dark:bg-gradient-to-br dark:from-indigo-500 dark:to-cyan-400 rounded flex items-center justify-center dark:shadow-[0_0_15px_rgba(99,102,241,0.4)]">
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
-            <span className="font-semibold text-lg tracking-tight text-slate-900 dark:text-white">Electoral Software</span>
+            <span className="font-semibold text-lg tracking-tight text-slate-900 dark:text-white">Campaign Management System</span>
           </div>
 
           <div className="flex items-center space-x-6">

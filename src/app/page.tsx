@@ -34,7 +34,7 @@ export default function EnterpriseGateway() {
             <div className="w-8 h-8 bg-slate-900 rounded flex items-center justify-center">
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
-            <span className="font-semibold text-lg tracking-tight">Electoral Software</span>
+            <span className="font-semibold text-lg tracking-tight">Campaign Management System</span>
           </div>
         </div>
       </nav>
@@ -46,7 +46,7 @@ export default function EnterpriseGateway() {
         <div className="w-full lg:w-[45%] p-6 md:p-12 xl:p-16 flex flex-col lg:h-full lg:overflow-y-auto border-b lg:border-b-0 lg:border-r border-slate-200 bg-white relative z-10 shrink-0">
           <div className="max-w-xl mx-auto w-full">
             <h1 className="text-4xl font-bold tracking-tight text-slate-900 mb-4 leading-tight">
-              Select your Electoral Software.
+              Select your Campaign Management System.
             </h1>
             <p className="text-base text-slate-600 leading-relaxed mb-10">
               Choose the tools you need. The software has two main parts: a system for counting votes and a system for sending bulk SMS messages.

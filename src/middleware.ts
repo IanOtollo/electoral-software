@@ -1,45 +1,26 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(req: NextRequest) {
-  const url = req.nextUrl
-  
-  // 1. Exclude public paths that shouldn't require basic auth
-  // - /upload: field agents need to access this without a global password
-  // - /api: any webhooks
-  // - /_next: static assets
-  if (
-    url.pathname.startsWith('/upload') || 
-    url.pathname.startsWith('/api') || 
-    url.pathname.startsWith('/_next') ||
-    url.pathname.includes('.') // Exclude files like images, icons
-  ) {
-    return NextResponse.next()
-  }
+export function middleware(request: NextRequest) {
+  const sessionToken = request.cookies.get('sessionToken')?.value
 
-  // 2. Global Basic Authentication for the rest of the site
-  const basicAuth = req.headers.get('authorization')
-  
-  if (basicAuth) {
-    const authValue = basicAuth.split(' ')[1]
-    const decoded = atob(authValue)
-    const [user, pwd] = decoded.split(':')
-
-    // Simple hardcoded secure access
-    if (user === 'admin' && pwd === 'secure2027') {
-      return NextResponse.next()
+  // Protect admin routes
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (!sessionToken) {
+      return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
-  // 3. Prompt for Basic Auth if not provided or incorrect
-  return new NextResponse('Authentication required. This is a secure system.', {
-    status: 401,
-    headers: {
-      'WWW-Authenticate': 'Basic realm="Campaign Management System"',
-    },
-  })
+  // Protect dashboard routes
+  if (request.nextUrl.pathname.startsWith('/dashboard')) {
+    if (!sessionToken) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/admin/:path*', '/dashboard/:path*'],
 }

@@ -44,7 +44,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="font-heading text-3xl font-semibold text-accent">
-            Electoral Software
+            Campaign Management System
           </Link>
           <p className="mt-2 text-sm text-(--muted)">Sign in to your account</p>
         </div>
