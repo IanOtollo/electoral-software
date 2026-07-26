@@ -24,9 +24,13 @@ const dmMono = DM_Mono({
 import { ThemeProvider } from "../components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Electoral Software — Bulk SMS & Parallel Tally",
-  description:
-    "Professional campaign management for Kenyan political teams. Bulk SMS outreach and unofficial parallel vote tally tracking.",
+  title: "Campaign Management System",
+  description: "Professional campaign management and voter outreach tracking.",
+  openGraph: {
+    title: "Campaign Management System",
+    description: "Professional campaign management and voter outreach tracking.",
+    siteName: "Campaign Management System",
+  }
 };
 
 export default function RootLayout({
