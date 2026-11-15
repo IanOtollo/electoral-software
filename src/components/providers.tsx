@@ -21,7 +21,8 @@ function useCookieAuth() {
   useEffect(() => {
     let active = true;
     fetch("/api/auth/token", { cache: "no-store" })
-      .then((r) => active && setState({ isLoading: false, isAuthenticated: r.ok }))
+      .then((r) => r.json() as Promise<{ token: string | null }>)
+      .then((j) => active && setState({ isLoading: false, isAuthenticated: !!j.token }))
       .catch(() => active && setState({ isLoading: false, isAuthenticated: false }));
     return () => {
       active = false;
