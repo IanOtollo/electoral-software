@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as agentPortal from "../agentPortal.js";
 import type * as agents from "../agents.js";
 import type * as audit from "../audit.js";
@@ -16,6 +17,7 @@ import type * as bootstrap from "../bootstrap.js";
 import type * as campaign from "../campaign.js";
 import type * as contacts from "../contacts.js";
 import type * as crons from "../crons.js";
+import type * as http from "../http.js";
 import type * as lib_audit from "../lib/audit.js";
 import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_guard from "../lib/guard.js";
@@ -26,7 +28,9 @@ import type * as lib_reserved from "../lib/reserved.js";
 import type * as lib_sms from "../lib/sms.js";
 import type * as maintenance from "../maintenance.js";
 import type * as messages from "../messages.js";
+import type * as passwords from "../passwords.js";
 import type * as signup from "../signup.js";
+import type * as smsSend from "../smsSend.js";
 import type * as tally from "../tally.js";
 import type * as tenants from "../tenants.js";
 import type * as users from "../users.js";
@@ -38,6 +42,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   agentPortal: typeof agentPortal;
   agents: typeof agents;
   audit: typeof audit;
@@ -46,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   campaign: typeof campaign;
   contacts: typeof contacts;
   crons: typeof crons;
+  http: typeof http;
   "lib/audit": typeof lib_audit;
   "lib/crypto": typeof lib_crypto;
   "lib/guard": typeof lib_guard;
@@ -56,7 +62,9 @@ declare const fullApi: ApiFromModules<{
   "lib/sms": typeof lib_sms;
   maintenance: typeof maintenance;
   messages: typeof messages;
+  passwords: typeof passwords;
   signup: typeof signup;
+  smsSend: typeof smsSend;
   tally: typeof tally;
   tenants: typeof tenants;
   users: typeof users;

@@ -28,10 +28,11 @@ export const preview = query({
   args: { body: v.string(), targetGroup: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { tenantId } = await authorize(ctx, "sms:read");
-    if (!tenantId) return { segments: segmentsFor(args.body), recipients: 0 };
+    if (!tenantId) return { segments: segmentsFor(args.body), recipients: 0, credits: 0 };
+    const tenant = await ctx.db.get(tenantId);
     const row = await ctx.db.query("contact_stats").withIndex("by_tenant", (q) => q.eq("tenantId", tenantId)).unique();
     const recipients = args.targetGroup ? (row?.groups.find((g) => g.name === args.targetGroup)?.count ?? 0) : (row?.optedIn ?? 0);
-    return { segments: segmentsFor(args.body), recipients };
+    return { segments: segmentsFor(args.body), recipients, credits: tenant?.smsCredits ?? 0 };
   },
 });
 
@@ -100,6 +101,7 @@ export const list = query({
       id: m._id, body: m.body, language: m.language, sponsorName: m.sponsorName, targetGroup: m.targetGroup ?? null,
       recipients: m.recipients, segments: m.segments, scheduledFor: m.scheduledFor, status: m.status,
       reviewNote: m.reviewNote ?? null, createdAt: m.createdAt,
+      accepted: m.accepted ?? 0, rejected: m.rejected ?? 0, delivered: m.delivered ?? 0, failureNote: m.failureNote ?? null,
     }));
   },
 });
@@ -147,5 +149,23 @@ export const adminDecide = mutation({
     if (args.decision === "refused" && (!note || note.length < 5)) throw fail("Give the reason for refusing, so the sponsor can fix it");
     await ctx.db.patch(m._id, { status: args.decision, reviewNote: note || undefined, reviewedBy: user._id, reviewedAt: Date.now() });
     await audit(ctx, { tenantId: m.tenantId, actorId: user._id, action: `message.${args.decision}`, entityType: "sms_messages", entityId: m._id, metadata: { note } });
+  },
+});
+
+/** Recently decided requests, so the approval queue keeps a visible record. */
+export const adminHistory = query({
+  args: {},
+  handler: async (ctx) => {
+    await authorize(ctx, "sms:review");
+    const rows = [
+      ...(await ctx.db.query("sms_messages").withIndex("by_status", (q) => q.eq("status", "approved")).order("desc").take(50)),
+      ...(await ctx.db.query("sms_messages").withIndex("by_status", (q) => q.eq("status", "refused")).order("desc").take(50)),
+    ].sort((a, b) => (b.reviewedAt ?? 0) - (a.reviewedAt ?? 0)).slice(0, 60);
+    return await Promise.all(
+      rows.map(async (m) => {
+        const t = await ctx.db.get(m.tenantId);
+        return { id: m._id, workspace: t?.name ?? "Deleted workspace", body: m.body, sponsorName: m.sponsorName, recipients: m.recipients, scheduledFor: m.scheduledFor, status: m.status, reviewNote: m.reviewNote ?? null, reviewedAt: m.reviewedAt ?? null };
+      }),
+    );
   },
 });

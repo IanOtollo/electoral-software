@@ -7,7 +7,7 @@ export async function audit(
   ctx: MutationCtx,
   e: {
     tenantId?: Id<"tenants">;
-    actorId: Id<"users">;
+    actorId?: Id<"users">; // omit for system events
     action: string;
     entityType: string;
     entityId: string;

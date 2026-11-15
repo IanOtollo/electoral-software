@@ -5,29 +5,9 @@ import { ShieldCheck, ShieldAlert } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import { Badge, Card, EmptyState, PageHeader, Skeleton } from "@/components/ui/primitives";
 import { useMe } from "@/hooks/use-me";
+import { describeAction } from "@/lib/audit-labels";
 
 const dateFmt = new Intl.DateTimeFormat("en-KE", { dateStyle: "medium", timeStyle: "medium" });
-
-const LABELS: Record<string, string> = {
-  "auth.login": "Signed in",
-  "auth.logout": "Signed out",
-  "user.invited": "Invited a person",
-  "user.invite_revoked": "Withdrew an invitation",
-  "user.joined": "Accepted an invitation",
-  "user.role_changed": "Changed a role",
-  "user.suspended": "Suspended a user",
-  "user.reactivated": "Reactivated a user",
-  "tenant.created": "Workspace created",
-  "tenant.updated": "Workspace updated",
-};
-
-function describe(action: string, metadata: unknown) {
-  const base = LABELS[action] ?? action;
-  const m = (metadata ?? {}) as Record<string, string>;
-  if (action === "user.role_changed" && m.from && m.to) return `${base}: ${m.from.replace(/_/g, " ")} → ${m.to.replace(/_/g, " ")}`;
-  if (action === "user.invited" && m.email) return `${base}: ${m.email}`;
-  return base;
-}
 
 export default function AuditPage() {
   const { can } = useMe();
@@ -68,7 +48,7 @@ export default function AuditPage() {
             {log.map((e) => (
               <li key={e.id} className="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-medium text-ink">{describe(e.action, e.metadata)}</p>
+                  <p className="text-sm font-medium text-ink">{describeAction(e.action, e.metadata)}</p>
                   <p className="text-sm text-muted">{e.actor}</p>
                 </div>
                 <time className="tnum text-sm text-muted" dateTime={new Date(e.createdAt).toISOString()}>

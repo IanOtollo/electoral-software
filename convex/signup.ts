@@ -28,6 +28,10 @@ export const register = mutation({
     assertServer(args.serverSecret);
     const now = Date.now();
 
+    // The administrator can pause new sign-ups platform-wide.
+    const setting = await ctx.db.query("platform_settings").withIndex("by_key", (q) => q.eq("key", "main")).unique();
+    if (setting && !setting.signupsOpen) return { ok: false as const, message: "New campaign sign-ups are paused at the moment. Please check back soon." };
+
     const key = "signup:" + (await sha256Hex(args.ip));
     const rl = await ctx.db.query("rate_limits").withIndex("by_key", (q) => q.eq("key", key)).unique();
     if (rl && now - rl.windowStart < 3600_000 && rl.count >= SIGNUPS_PER_HOUR) {

@@ -54,4 +54,24 @@ without redeploying the old Convex code to its own deployment. Rolling back is t
 - Legal documents reviewed by a Kenyan advocate; set the operator details above.
 - Confirm the retention periods in the Privacy Policy.
 - ODPC registration thresholds checked.
-- Bulk SMS stays off until the approval workflow and a licensed provider are in place.
+- Bulk SMS stays off until Africa's Talking is configured as below and a real test message has been sent and received.
+
+## Switching on SMS (Africa's Talking)
+
+The sender runs every 5 minutes, sends only approved messages whose time has come, and only between 08:00 and 17:00
+East Africa Time. Until the variables below are set it sends nothing and says so; it never pretends.
+
+1. In Africa's Talking, create an app and an API key. Try it first with username `sandbox` and
+   `AT_BASE_URL=https://api.sandbox.africastalking.com` (no real SMS is sent).
+2. Set these in the Convex deployment (Dashboard > Settings > Environment Variables):
+   - `AT_USERNAME`, `AT_API_KEY`
+   - `AT_CALLBACK_SECRET`: a random string of 16 or more characters (for example the output of `openssl rand -hex 24`)
+   - `AT_BASE_URL`: only for the sandbox
+3. In Africa's Talking, set the delivery-report callback to
+   `https://<deployment>.convex.site/sms/delivery?key=<AT_CALLBACK_SECRET>` and, if you rent a shortcode for replies,
+   the incoming-message callback to `https://<deployment>.convex.site/sms/incoming?key=<AT_CALLBACK_SECRET>`.
+   A reply of STOP, ACHA or UNSUBSCRIBE then withdraws that person's consent automatically.
+4. Register each workspace's sender ID with Africa's Talking and the networks, then enter it in /admin on the workspace page.
+5. Grant SMS credit to a workspace in /admin (payments are not built). One credit is one SMS part to one person.
+6. Credit is taken before each batch is sent and given back for numbers the network refuses. If the network does not
+   answer, the message is stopped rather than retried, so nobody is messaged twice; check the Africa's Talking dashboard.

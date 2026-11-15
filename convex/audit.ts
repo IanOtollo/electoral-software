@@ -16,12 +16,12 @@ export const list = query({
 
     const names = new Map<string, string>();
     for (const r of rows) {
-      if (!names.has(r.actorId)) names.set(r.actorId, (await ctx.db.get(r.actorId))?.name ?? "Unknown");
+      if (r.actorId && !names.has(r.actorId)) names.set(r.actorId, (await ctx.db.get(r.actorId))?.name ?? "Unknown");
     }
     return rows.map((r) => ({
       id: r._id,
       action: r.action,
-      actor: names.get(r.actorId) ?? "Unknown",
+      actor: r.actorId ? (names.get(r.actorId) ?? "Unknown") : "System",
       entityType: r.entityType,
       metadata: r.metadata,
       createdAt: r.createdAt,

@@ -11,7 +11,7 @@ const MAX_BATCH = 500;
 type Delta = { total?: number; optedIn?: number; group?: string | undefined; groupDelta?: number };
 
 /** Keeps the running totals in step with every change, so counts never need a scan. */
-async function bump(ctx: MutationCtx, tenantId: Id<"tenants">, d: Delta) {
+export async function bump(ctx: MutationCtx, tenantId: Id<"tenants">, d: Delta) {
   const row = await ctx.db.query("contact_stats").withIndex("by_tenant", (q) => q.eq("tenantId", tenantId)).unique();
   const base = row ?? { tenantId, total: 0, optedIn: 0, groups: [] as { name: string; count: number }[] };
   const groups = base.groups.map((g) => ({ ...g }));

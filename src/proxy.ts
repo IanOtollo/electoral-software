@@ -11,7 +11,7 @@ import { jwtVerify } from "jose";
  * The /admin console is a separate channel with its own sign-in page, and if
  * ADMIN_ALLOWED_IPS is set (comma-separated) every other address gets a plain 404.
  */
-const PUBLIC_PREFIXES = new Set(["", "login", "aspirant", "area", "legal", "agent", "join", "design"]);
+const PUBLIC_PREFIXES = new Set(["", "login", "aspirant", "area", "legal", "agent", "join", "reset", "design"]);
 
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;

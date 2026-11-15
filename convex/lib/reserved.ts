@@ -5,7 +5,7 @@
  */
 export const RESERVED_HANDLES = new Set([
   "admin", "app", "api", "login", "logout", "signin", "signup", "register", "aspirant", "area", "agent", "agents",
-  "join", "legal", "design", "static", "public", "assets", "favicon", "robots", "sitemap", "www", "help", "support",
+  "join", "reset", "legal", "design", "static", "public", "assets", "favicon", "robots", "sitemap", "www", "help", "support",
   "about", "contact", "terms", "privacy", "cookies", "settings", "dashboard", "account", "billing", "results",
   "iebc", "official", "system", "root", "null", "undefined",
 ]);

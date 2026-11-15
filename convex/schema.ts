@@ -177,7 +177,8 @@ export default defineSchema({
   })
     .index("by_tenant", ["tenantId"])
     .index("by_tenant_phone", ["tenantId", "phone"])
-    .index("by_tenant_group", ["tenantId", "group"]),
+    .index("by_tenant_group", ["tenantId", "group"])
+    .index("by_phone", ["phone"]),
 
   // Running totals so counts never need a full scan (a query may read at most ~16k documents).
   contact_stats: defineTable({
@@ -202,7 +203,17 @@ export default defineSchema({
     scheduledFor: v.number(),
     authorizationStorageId: v.id("_storage"), // signed letter from the sponsor
     identityStorageId: v.id("_storage"), // certified ID or party registration
-    status: v.union(v.literal("submitted"), v.literal("approved"), v.literal("refused"), v.literal("cancelled"), v.literal("sent")),
+    status: v.union(
+      v.literal("submitted"), v.literal("approved"), v.literal("refused"), v.literal("cancelled"),
+      v.literal("sending"), v.literal("sent"), v.literal("failed"),
+    ),
+    // Delivery progress, written only from what Africa's Talking actually reports.
+    cursor: v.optional(v.string()), // where the sender stopped, so a resumed run never repeats people
+    sendingSince: v.optional(v.number()),
+    accepted: v.optional(v.number()), // recipients the network took
+    rejected: v.optional(v.number()), // recipients it refused
+    delivered: v.optional(v.number()), // handsets that confirmed receipt
+    failureNote: v.optional(v.string()),
     reviewNote: v.optional(v.string()),
     reviewedBy: v.optional(v.id("users")),
     reviewedAt: v.optional(v.number()),
@@ -210,6 +221,19 @@ export default defineSchema({
   })
     .index("by_tenant", ["tenantId"])
     .index("by_status", ["status", "scheduledFor"]),
+
+  // One row per person a message was handed to, so delivery reports can be matched back to it.
+  sms_recipients: defineTable({
+    messageId: v.id("sms_messages"),
+    tenantId: v.id("tenants"),
+    phone: v.string(),
+    providerId: v.optional(v.string()),
+    status: v.union(v.literal("accepted"), v.literal("delivered"), v.literal("failed")),
+    reason: v.optional(v.string()),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_tenant", ["tenantId"])
+    .index("by_provider_id", ["providerId"]),
 
   // Generic fixed-window limiter (sign-up per IP, etc).
   rate_limits: defineTable({
@@ -223,7 +247,7 @@ export default defineSchema({
   // Append-only, hash-chained per tenant (platform events use tenantId = undefined).
   audit_log: defineTable({
     tenantId: v.optional(v.id("tenants")),
-    actorId: v.id("users"),
+    actorId: v.optional(v.id("users")), // empty for events the system itself records (delivery reports, STOP replies)
     action: v.string(),
     entityType: v.string(),
     entityId: v.string(),
@@ -231,5 +255,27 @@ export default defineSchema({
     prevHash: v.string(),
     hash: v.string(),
     createdAt: v.number(),
-  }).index("by_tenant_time", ["tenantId", "createdAt"]),
+  })
+    .index("by_tenant_time", ["tenantId", "createdAt"])
+    .index("by_time", ["createdAt"]), // platform-wide view for administrators
+
+  // One-time password reset links, issued by a platform administrator.
+  password_resets: defineTable({
+    userId: v.id("users"),
+    tokenHash: v.string(), // sha256 of the token; the token itself is never stored
+    createdBy: v.id("users"),
+    expiresAt: v.number(),
+    usedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_token_hash", ["tokenHash"])
+    .index("by_user", ["userId"]),
+
+  // Platform-wide switches, set by the administrator (one row, key "main").
+  platform_settings: defineTable({
+    key: v.string(),
+    signupsOpen: v.boolean(),
+    updatedBy: v.optional(v.id("users")),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
 });

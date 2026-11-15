@@ -1,261 +1,120 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { useQuery } from "convex/react";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
-import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Select, Skeleton } from "@/components/ui/primitives";
-import { Modal } from "@/components/ui/modal";
-import { InviteLink } from "@/components/invite-link";
-import { errorMessage } from "@/hooks/use-me";
+import { Badge, Card, PageHeader, Skeleton } from "@/components/ui/primitives";
+import { describeAction } from "@/lib/audit-labels";
 
-const dateFmt = new Intl.DateTimeFormat("en-KE", { dateStyle: "medium" });
-const PLANS = ["starter", "constituency", "county", "national"] as const;
-type Plan = (typeof PLANS)[number];
-type Module = "sms" | "tally";
+const nf = new Intl.NumberFormat("en-KE");
+const when = new Intl.DateTimeFormat("en-KE", { dateStyle: "medium", timeStyle: "short" });
+const TONE = { active: "success", trial: "info", suspended: "danger" } as const;
 
-const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+function Figure({ label, value, note, href }: { label: string; value: React.ReactNode; note?: React.ReactNode; href?: string }) {
+  const body = (
+    <div className="h-full border border-line bg-surface p-5 transition-colors hover:bg-surface-2">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
+      <p className="tnum mt-2.5 font-display text-4xl font-medium leading-none tracking-tight">{value}</p>
+      {note && <p className="mt-2 text-sm text-muted">{note}</p>}
+    </div>
+  );
+  return href ? <Link href={href}>{body}</Link> : body;
+}
 
-export default function WorkspacesPage() {
-  const tenants = useQuery(api.tenants.list);
-  const update = useMutation(api.tenants.update);
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState("");
-
-  async function setStatus(tenantId: Id<"tenants">, status: "trial" | "active" | "suspended") {
-    setError("");
-    try {
-      await update({ tenantId, status });
-    } catch (e) {
-      setError(errorMessage(e));
-    }
-  }
+export default function AdminOverview() {
+  const o = useQuery(api.admin.overview);
 
   return (
     <>
-      <PageHeader
-        title="Workspaces"
-        description="Each campaign operates in its own isolated workspace. You provision them here and cannot see their voter data or messages."
-        actions={
-          <Button onClick={() => setCreating(true)}>
-            <Plus className="size-4" /> New workspace
-          </Button>
-        }
-      />
+      <PageHeader kicker="Platform" title="Overview" description="How the platform is doing right now, and what needs you." />
 
-      {error && (
-        <div role="alert" className="mb-4 rounded-md border border-danger/30 bg-danger-soft px-3 py-2.5 text-sm text-danger">
-          {error}
+      {o === undefined ? (
+        <div className="grid gap-4 md:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-28" />
+          ))}
         </div>
-      )}
-
-      <Card className="overflow-hidden">
-        {tenants === undefined ? (
-          <div className="space-y-3 p-5">
-            <Skeleton className="h-12" />
-            <Skeleton className="h-12" />
-          </div>
-        ) : tenants.length === 0 ? (
-          <EmptyState
-            title="No workspaces yet"
-            description="Create the first workspace and send its administrator an invitation."
-            action={<Button onClick={() => setCreating(true)}>New workspace</Button>}
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-line bg-surface-2 text-xs uppercase tracking-wide text-muted">
-                <tr>
-                  <th className="px-5 py-3 font-medium">Workspace</th>
-                  <th className="px-5 py-3 font-medium">Plan</th>
-                  <th className="px-5 py-3 font-medium">Modules</th>
-                  <th className="px-5 py-3 font-medium">Users</th>
-                  <th className="px-5 py-3 font-medium">Status</th>
-                  <th className="px-5 py-3 font-medium">Created</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {tenants.map((t) => (
-                  <tr key={t._id}>
-                    <td className="px-5 py-3.5">
-                      <p className="font-medium text-ink">{t.name}</p>
-                      <p className="font-mono text-xs text-muted">{t.slug}</p>
-                    </td>
-                    <td className="px-5 py-3.5 capitalize">{t.plan}</td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex gap-1.5">
-                        {t.modules.map((m) => (
-                          <Badge key={m} tone="info">
-                            {m === "sms" ? "SMS" : "Results"}
-                          </Badge>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="tnum px-5 py-3.5">{t.userCount}</td>
-                    <td className="px-5 py-3.5">
-                      <Select
-                        aria-label={`Status for ${t.name}`}
-                        value={t.status}
-                        className="h-9 w-32"
-                        onChange={(e) => setStatus(t._id, e.target.value as "trial" | "active" | "suspended")}
-                      >
-                        <option value="trial">Trial</option>
-                        <option value="active">Active</option>
-                        <option value="suspended">Suspended</option>
-                      </Select>
-                    </td>
-                    <td className="px-5 py-3.5 text-muted">{dateFmt.format(t.createdAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-
-      <CreateWorkspaceModal open={creating} onClose={() => setCreating(false)} />
-    </>
-  );
-}
-
-function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const create = useMutation(api.tenants.create);
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [slugTouched, setSlugTouched] = useState(false);
-  const [plan, setPlan] = useState<Plan>("county");
-  const [modules, setModules] = useState<Module[]>(["sms", "tally"]);
-  const [contactEmail, setContactEmail] = useState("");
-  const [adminEmail, setAdminEmail] = useState("");
-  const [senderId, setSenderId] = useState("");
-  const [token, setToken] = useState<string | null>(null);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  function close() {
-    setName("");
-    setSlug("");
-    setSlugTouched(false);
-    setPlan("county");
-    setModules(["sms", "tally"]);
-    setContactEmail("");
-    setAdminEmail("");
-    setSenderId("");
-    setToken(null);
-    setError("");
-    onClose();
-  }
-
-  const toggle = (m: Module) => setModules((cur) => (cur.includes(m) ? cur.filter((x) => x !== m) : [...cur, m]));
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    if (modules.length === 0) return setError("License at least one module");
-    setBusy(true);
-    try {
-      const res = await create({
-        name,
-        slug,
-        plan,
-        modules,
-        contactEmail,
-        adminEmail,
-        senderId: senderId.trim() || undefined,
-      });
-      setToken(res.inviteToken);
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Modal
-      open={open}
-      onClose={close}
-      title={token ? "Workspace created" : "New workspace"}
-      description={token ? `Send this link to ${adminEmail} so they can set a password and become the workspace administrator.` : undefined}
-    >
-      {token ? (
-        <InviteLink token={token} />
       ) : (
-        <form onSubmit={submit} className="space-y-4" noValidate>
-          {error && (
-            <div role="alert" className="rounded-md border border-danger/30 bg-danger-soft px-3 py-2.5 text-sm text-danger">
-              {error}
-            </div>
-          )}
-          <Field label="Campaign name" htmlFor="ws-name">
-            <Input
-              id="ws-name"
-              required
-              autoFocus
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (!slugTouched) setSlug(slugify(e.target.value));
-              }}
-            />
-          </Field>
-          <Field label="Workspace slug" htmlFor="ws-slug" hint="Lower-case letters, numbers and hyphens.">
-            <Input
-              id="ws-slug"
-              required
-              value={slug}
-              onChange={(e) => {
-                setSlugTouched(true);
-                setSlug(slugify(e.target.value));
-              }}
-            />
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Plan" htmlFor="ws-plan">
-              <Select id="ws-plan" value={plan} onChange={(e) => setPlan(e.target.value as Plan)} className="capitalize">
-                {PLANS.map((p) => (
-                  <option key={p} value={p}>
-                    {p[0].toUpperCase() + p.slice(1)}
-                  </option>
+        <>
+          {o.approximate && <p className="mb-4 border border-warning/40 bg-warning-soft px-4 py-2.5 text-sm text-warning">The platform is large enough that some totals below are approximate.</p>}
+
+          <section aria-label="Needs attention" className="mb-8 space-y-3">
+            {o.messages.pendingApproval > 0 && (
+              <Link href="/admin/messages" className="flex items-center justify-between gap-4 border border-warning/40 bg-warning-soft px-5 py-4 text-warning hover:brightness-95">
+                <span className="flex items-center gap-3 font-medium">
+                  <AlertTriangle className="size-5 shrink-0" aria-hidden="true" />
+                  {o.messages.pendingApproval} political message{o.messages.pendingApproval === 1 ? "" : "s"} waiting for approval
+                  {o.messages.oldestPending && <span className="font-normal opacity-80">· oldest submitted {when.format(o.messages.oldestPending)}</span>}
+                </span>
+                <ArrowRight className="size-4 shrink-0" aria-hidden="true" />
+              </Link>
+            )}
+            {o.field.flagged > 0 && (
+              <div className="flex items-center gap-3 border border-danger/40 bg-danger-soft px-5 py-4 font-medium text-danger">
+                <AlertTriangle className="size-5 shrink-0" aria-hidden="true" />
+                {o.field.flagged} polling-station result{o.field.flagged === 1 ? " is" : "s are"} flagged for a check across all campaigns
+              </div>
+            )}
+            {o.workspaces.suspended > 0 && (
+              <Link href="/admin/workspaces" className="flex items-center justify-between gap-4 border border-line bg-surface px-5 py-4 hover:bg-surface-2">
+                <span className="font-medium">{o.workspaces.suspended} workspace{o.workspaces.suspended === 1 ? " is" : "s are"} suspended</span>
+                <ArrowRight className="size-4 text-muted" aria-hidden="true" />
+              </Link>
+            )}
+            {o.messages.pendingApproval === 0 && o.field.flagged === 0 && o.workspaces.suspended === 0 && (
+              <p className="border border-success/40 bg-success-soft px-5 py-4 font-medium text-success">Nothing needs your attention.</p>
+            )}
+          </section>
+
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Platform figures">
+            <Figure label="Workspaces" value={nf.format(o.workspaces.total)} note={`${o.workspaces.active} active · ${o.workspaces.trial} trial · ${o.workspaces.newThisWeek} new this week`} href="/admin/workspaces" />
+            <Figure label="People" value={nf.format(o.users.total)} note={Object.entries(o.users.byRole).map(([r, n]) => `${n} ${r.replace(/_/g, " ")}`).join(" · ")} href="/admin/users" />
+            <Figure label="Field agents" value={nf.format(o.field.agents)} note={`${nf.format(o.field.stationsAssigned)} stations assigned`} />
+            <Figure label="Stations reported" value={nf.format(o.field.stationsReported)} note={`of ${nf.format(o.field.stationsAssigned)} assigned across campaigns`} />
+            <Figure label="Flagged results" value={nf.format(o.field.flagged)} note="Need a human check" />
+            <Figure label="Awaiting approval" value={nf.format(o.messages.pendingApproval)} note="Political messages" href="/admin/messages" />
+            <Figure label="SMS credit outstanding" value={nf.format(o.smsCreditsOutstanding)} note="Granted, not yet used" />
+            <Figure label="New sign-ups (7 days)" value={nf.format(o.workspaces.newThisWeek)} note="Campaign workspaces" />
+          </section>
+
+          <div className="mt-10 grid gap-8 lg:grid-cols-2">
+            <section>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted">Newest workspaces</h2>
+              <Card className="divide-y divide-line">
+                {o.newest.length === 0 && <p className="p-5 text-sm text-muted">None yet.</p>}
+                {o.newest.map((w) => (
+                  <Link key={w.id} href={`/admin/workspaces/${w.id}`} className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-surface-2">
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{w.name}</span>
+                      <span className="text-xs text-muted">{when.format(w.createdAt)}</span>
+                    </span>
+                    <Badge tone={TONE[w.status]}>{w.status}</Badge>
+                  </Link>
                 ))}
-              </Select>
-            </Field>
-            <Field label="SMS sender ID" htmlFor="ws-sender" hint="Optional, 3 to 11 characters.">
-              <Input id="ws-sender" value={senderId} maxLength={11} onChange={(e) => setSenderId(e.target.value)} />
-            </Field>
+              </Card>
+            </section>
+
+            <section>
+              <h2 className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                Recent activity
+                <Link href="/admin/audit" className="font-medium normal-case tracking-normal text-ink underline underline-offset-4">View all</Link>
+              </h2>
+              <Card className="divide-y divide-line">
+                {o.activity.length === 0 && <p className="p-5 text-sm text-muted">No activity yet.</p>}
+                {o.activity.map((a) => (
+                  <div key={a.id} className="px-5 py-3">
+                    <p className="text-sm font-medium">{describeAction(a.action)}</p>
+                    <p className="text-xs text-muted">
+                      {a.actor} · {a.workspace} · {when.format(a.createdAt)}
+                    </p>
+                  </div>
+                ))}
+              </Card>
+            </section>
           </div>
-          <fieldset>
-            <legend className="mb-1.5 text-sm font-medium">Licensed modules</legend>
-            <div className="flex gap-4">
-              {(["sms", "tally"] as const).map((m) => (
-                <label key={m} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={modules.includes(m)} onChange={() => toggle(m)} className="size-4 accent-primary" />
-                  {m === "sms" ? "Voter messaging" : "Results monitoring"}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <Field label="Organisation contact email" htmlFor="ws-contact">
-            <Input id="ws-contact" type="email" required value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
-          </Field>
-          <Field label="Administrator email" htmlFor="ws-admin" hint="This person will own the workspace.">
-            <Input id="ws-admin" type="email" required value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} />
-          </Field>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={close}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={busy}>
-              Create workspace
-            </Button>
-          </div>
-        </form>
+        </>
       )}
-    </Modal>
+    </>
   );
 }
