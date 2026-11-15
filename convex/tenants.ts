@@ -119,3 +119,19 @@ export const update = mutation({
     });
   },
 });
+
+/** Payments are off, so SMS credit is added by the platform admin. Every grant is audited. */
+export const grantCredits = mutation({
+  args: { tenantId: v.id("tenants"), amount: v.number() },
+  handler: async (ctx, args) => {
+    const { user } = await authorize(ctx, "tenants:manage");
+    if (!Number.isInteger(args.amount) || args.amount === 0 || Math.abs(args.amount) > 10_000_000) throw fail("Enter a whole number of SMS credits");
+    const tenant = await ctx.db.get(args.tenantId);
+    if (!tenant) throw fail("Workspace not found");
+    const next = (tenant.smsCredits ?? 0) + args.amount;
+    if (next < 0) throw fail("That would take the balance below zero");
+    await ctx.db.patch(tenant._id, { smsCredits: next });
+    await audit(ctx, { tenantId: tenant._id, actorId: user._id, action: "tenant.credits_granted", entityType: "tenants", entityId: tenant._id, metadata: { amount: args.amount, balance: next } });
+    return { balance: next };
+  },
+});

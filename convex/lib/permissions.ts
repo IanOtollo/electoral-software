@@ -24,6 +24,7 @@ export const PERMISSIONS = [
   "voters:write",
   "sms:read",
   "sms:send",
+  "sms:review",
   "tally:read",
   "tally:submit",
   "tally:verify",
@@ -34,7 +35,7 @@ export type Permission = (typeof PERMISSIONS)[number];
 const TENANT_READ: Permission[] = ["voters:read", "sms:read", "tally:read"];
 
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
-  super_admin: ["tenants:manage", "users:read", "users:manage", "audit:read"],
+  super_admin: ["tenants:manage", "users:read", "users:manage", "audit:read", "sms:review"],
   tenant_admin: [
     "users:read", "users:manage", "audit:read", "settings:manage",
     "voters:read", "voters:write", "sms:read", "sms:send",

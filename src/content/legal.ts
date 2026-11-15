@@ -359,7 +359,7 @@ export const DOCS: LegalDoc[] = [
               ],
             },
           },
-          "Each acts under contract and only for the purposes above. We also disclose data where a law, court or the IEBC lawfully requires it, and to establish or defend legal claims. Verified polling-station results may in future appear publicly as aggregated figures; an agent's personal details are never published.",
+          "When a campaign submits a political message for approval, our platform staff can read that message and the sponsor's authorisation and identification documents. This is needed to pass them to the licensed provider and the networks for vetting, and staff may read nothing else in a campaign's workspace. Each provider acts under contract and only for the purposes above. We also disclose data where a law, court or the IEBC lawfully requires it, and to establish or defend legal claims. Verified polling-station results may in future appear publicly as aggregated figures; an agent's personal details are never published.",
         ],
       },
       {

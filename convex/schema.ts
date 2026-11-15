@@ -163,6 +163,54 @@ export default defineSchema({
     .index("by_tenant_current", ["tenantId", "isCurrent"])
     .index("by_tenant_station", ["tenantId", "stationCode"]),
 
+  // Contacts a campaign may message. Every contact carries the record of how consent was given.
+  contacts: defineTable({
+    tenantId: v.id("tenants"),
+    name: v.optional(v.string()),
+    phone: v.string(), // +254...
+    group: v.optional(v.string()),
+    consentStatus: v.union(v.literal("opted_in"), v.literal("opted_out")),
+    consentSource: v.string(), // how/where the person opted in, e.g. "signed membership forms 2026"
+    consentAt: v.number(),
+    consentBy: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_tenant", ["tenantId"])
+    .index("by_tenant_phone", ["tenantId", "phone"])
+    .index("by_tenant_group", ["tenantId", "group"]),
+
+  // Running totals so counts never need a full scan (a query may read at most ~16k documents).
+  contact_stats: defineTable({
+    tenantId: v.id("tenants"),
+    total: v.number(),
+    optedIn: v.number(),
+    groups: v.array(v.object({ name: v.string(), count: v.number() })), // opted-in contacts per group
+  }).index("by_tenant", ["tenantId"]),
+
+  // A political message request. It follows the Communications Authority process: it cannot be sent at once,
+  // it is scheduled at least 48 hours ahead with the sponsor's signed authorisation and ID, and it is vetted
+  // by the network before it goes out.
+  sms_messages: defineTable({
+    tenantId: v.id("tenants"),
+    createdBy: v.id("users"),
+    body: v.string(),
+    language: v.union(v.literal("en"), v.literal("sw")),
+    sponsorName: v.string(),
+    targetGroup: v.optional(v.string()), // undefined = all opted-in contacts
+    recipients: v.number(), // opted-in contacts at submission
+    segments: v.number(), // SMS parts per recipient
+    scheduledFor: v.number(),
+    authorizationStorageId: v.id("_storage"), // signed letter from the sponsor
+    identityStorageId: v.id("_storage"), // certified ID or party registration
+    status: v.union(v.literal("submitted"), v.literal("approved"), v.literal("refused"), v.literal("cancelled"), v.literal("sent")),
+    reviewNote: v.optional(v.string()),
+    reviewedBy: v.optional(v.id("users")),
+    reviewedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_tenant", ["tenantId"])
+    .index("by_status", ["status", "scheduledFor"]),
+
   // Generic fixed-window limiter (sign-up per IP, etc).
   rate_limits: defineTable({
     key: v.string(),

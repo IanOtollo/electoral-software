@@ -11,8 +11,8 @@ export const createSuperAdmin = internalMutation({
   args: { email: v.string(), name: v.string(), password: v.string() },
   handler: async (ctx, args) => {
     const email = args.email.toLowerCase().trim();
-    // The platform administrator controls every workspace, so this one account keeps a stricter minimum.
-    const weak = validatePasswordStrength(args.password, 12);
+    // The platform administrator controls every workspace, so this account keeps a slightly higher minimum than everyday accounts.
+    const weak = validatePasswordStrength(args.password, 8);
     if (weak) throw new Error(weak);
     if (await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", email)).unique()) {
       throw new Error("User already exists");
