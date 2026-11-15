@@ -1,154 +1,121 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
-import bcrypt from "bcryptjs";
-import { requirePlatformAdmin, requireTenantAccess, writeAuditLog } from "./utils";
+import { ConvexError, v } from "convex/values";
+import { authorize } from "./lib/guard";
+import { audit } from "./lib/audit";
+import { randomToken, sha256Hex } from "./lib/crypto";
+import { isReservedHandle } from "./lib/reserved";
+
+const INVITE_TTL = 1000 * 60 * 60 * 72;
+const fail = (message: string) => new ConvexError({ code: "BAD_REQUEST", message });
+
+const moduleArg = v.union(v.literal("sms"), v.literal("tally"));
+const planArg = v.union(
+  v.literal("starter"),
+  v.literal("constituency"),
+  v.literal("county"),
+  v.literal("national"),
+);
 
 export const list = query({
-  args: { token: v.optional(v.string()) },
-  handler: async (ctx, args) => {
-    await requirePlatformAdmin(ctx, args.token);
+  args: {},
+  handler: async (ctx) => {
+    await authorize(ctx, "tenants:manage");
     const tenants = await ctx.db.query("tenants").order("desc").collect();
-    return tenants;
+    return await Promise.all(
+      tenants.map(async (t) => {
+        const users = await ctx.db.query("users").withIndex("by_tenant", (q) => q.eq("tenantId", t._id)).collect();
+        return { ...t, userCount: users.filter((u) => u.status === "active").length };
+      }),
+    );
   },
 });
 
-export const get = query({
-  args: { token: v.optional(v.string()), tenantId: v.id("tenants") },
-  handler: async (ctx, args) => {
-    await requireTenantAccess(ctx, args.token, args.tenantId);
-    return await ctx.db.get(args.tenantId);
-  },
-});
-
+/** Creates the workspace and returns a one-time invite for its first administrator. */
 export const create = mutation({
   args: {
-    token: v.string(),
     name: v.string(),
     slug: v.string(),
-    licensedModules: v.array(v.union(v.literal("sms"), v.literal("tally"))),
-    planTier: v.union(
-      v.literal("starter"),
-      v.literal("constituency"),
-      v.literal("county"),
-      v.literal("enterprise")
-    ),
+    plan: planArg,
+    modules: v.array(moduleArg),
     contactEmail: v.string(),
-    contactPhone: v.string(),
-    ownerEmail: v.string(),
-    ownerPassword: v.string(),
+    contactPhone: v.optional(v.string()),
+    adminEmail: v.string(),
     senderId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const admin = await requirePlatformAdmin(ctx, args.token);
-    const now = Date.now();
-
-    const existing = await ctx.db
-      .query("tenants")
-      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
-      .first();
-    if (existing) throw new Error("Slug already in use");
+    const { user } = await authorize(ctx, "tenants:manage");
+    const slug = args.slug.toLowerCase().trim();
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) throw fail("Slug may only contain lower-case letters, numbers and hyphens");
+    if (isReservedHandle(slug)) throw fail("That address is reserved. Choose another workspace slug.");
+    if (await ctx.db.query("tenants").withIndex("by_slug", (q) => q.eq("slug", slug)).unique()) {
+      throw fail("That workspace slug is already in use");
+    }
+    const adminEmail = args.adminEmail.toLowerCase().trim();
+    if (await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", adminEmail)).unique()) {
+      throw fail("A user with that email already exists");
+    }
+    if (args.senderId && !/^[A-Za-z0-9]{3,11}$/.test(args.senderId)) {
+      throw fail("Sender ID must be 3 to 11 letters or numbers");
+    }
 
     const tenantId = await ctx.db.insert("tenants", {
-      name: args.name,
-      slug: args.slug,
-      licensedModules: args.licensedModules,
-      billingStatus: "trial",
-      planTier: args.planTier,
-      contactEmail: args.contactEmail,
-      contactPhone: args.contactPhone,
+      name: args.name.trim(),
+      slug,
+      status: "trial",
+      plan: args.plan,
+      modules: args.modules,
+      contactEmail: args.contactEmail.trim(),
+      contactPhone: args.contactPhone?.trim(),
       senderId: args.senderId,
-      senderIdStatus: args.senderId ? "pending" : undefined,
-      createdBy: admin._id,
-      createdAt: now,
+      createdBy: user._id,
+      createdAt: Date.now(),
     });
 
-    await ctx.db.insert("users", {
+    const token = randomToken(32);
+    await ctx.db.insert("invites", {
       tenantId,
-      role: "tenant_owner",
-      email: args.ownerEmail.toLowerCase().trim(),
-      passwordHash: await bcrypt.hash(args.ownerPassword, 12),
-      totpEnabled: false,
-      status: "active",
-      createdAt: now,
+      email: adminEmail,
+      role: "tenant_admin",
+      tokenHash: await sha256Hex(token),
+      invitedBy: user._id,
+      expiresAt: Date.now() + INVITE_TTL,
+      createdAt: Date.now(),
     });
 
-    await writeAuditLog(ctx, {
-      actorId: admin._id,
+    await audit(ctx, {
+      tenantId,
+      actorId: user._id,
       action: "tenant.created",
       entityType: "tenants",
       entityId: tenantId,
-      metadata: { name: args.name, ownerEmail: args.ownerEmail },
+      metadata: { name: args.name, adminEmail },
     });
-
-    return tenantId;
+    return { tenantId, inviteToken: token };
   },
 });
 
-export const updateStatus = mutation({
+export const update = mutation({
   args: {
-    token: v.string(),
     tenantId: v.id("tenants"),
-    billingStatus: v.union(
-      v.literal("trial"),
-      v.literal("active"),
-      v.literal("suspended"),
-      v.literal("cancelled")
-    ),
+    status: v.optional(v.union(v.literal("trial"), v.literal("active"), v.literal("suspended"))),
+    plan: v.optional(planArg),
+    modules: v.optional(v.array(moduleArg)),
+    senderId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const admin = await requirePlatformAdmin(ctx, args.token);
-    await ctx.db.patch(args.tenantId, { billingStatus: args.billingStatus });
-    await writeAuditLog(ctx, {
-      actorId: admin._id,
-      tenantId: args.tenantId,
-      action: "tenant.status_updated",
+    const { user } = await authorize(ctx, "tenants:manage");
+    const tenant = await ctx.db.get(args.tenantId);
+    if (!tenant) throw fail("Workspace not found");
+    const { tenantId, ...changes } = args;
+    const patch = Object.fromEntries(Object.entries(changes).filter(([, val]) => val !== undefined));
+    await ctx.db.patch(tenantId, patch);
+    await audit(ctx, {
+      tenantId,
+      actorId: user._id,
+      action: "tenant.updated",
       entityType: "tenants",
-      entityId: args.tenantId,
-      metadata: { billingStatus: args.billingStatus },
-    });
-  },
-});
-
-export const updateModules = mutation({
-  args: {
-    token: v.string(),
-    tenantId: v.id("tenants"),
-    licensedModules: v.array(v.union(v.literal("sms"), v.literal("tally"))),
-    planTier: v.union(
-      v.literal("starter"),
-      v.literal("constituency"),
-      v.literal("county"),
-      v.literal("enterprise")
-    ),
-  },
-  handler: async (ctx, args) => {
-    const admin = await requirePlatformAdmin(ctx, args.token);
-    await ctx.db.patch(args.tenantId, {
-      licensedModules: args.licensedModules,
-      planTier: args.planTier,
-    });
-    await writeAuditLog(ctx, {
-      actorId: admin._id,
-      tenantId: args.tenantId,
-      action: "tenant.modules_updated",
-      entityType: "tenants",
-      entityId: args.tenantId,
-      metadata: { licensedModules: args.licensedModules },
-    });
-  },
-});
-
-export const approveSenderId = mutation({
-  args: { token: v.string(), tenantId: v.id("tenants") },
-  handler: async (ctx, args) => {
-    const admin = await requirePlatformAdmin(ctx, args.token);
-    await ctx.db.patch(args.tenantId, { senderIdStatus: "approved" });
-    await writeAuditLog(ctx, {
-      actorId: admin._id,
-      tenantId: args.tenantId,
-      action: "tenant.sender_id_approved",
-      entityType: "tenants",
-      entityId: args.tenantId,
+      entityId: tenantId,
+      metadata: patch,
     });
   },
 });

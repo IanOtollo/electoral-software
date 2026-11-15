@@ -8,17 +8,25 @@
  * @module
  */
 
-import type * as auth_functions from "../auth_functions.js";
-import type * as campaigns from "../campaigns.js";
-import type * as contacts from "../contacts.js";
-import type * as dashboard from "../dashboard.js";
-import type * as seed from "../seed.js";
-import type * as sms from "../sms.js";
-import type * as stations from "../stations.js";
-import type * as submissions from "../submissions.js";
+import type * as agentPortal from "../agentPortal.js";
+import type * as agents from "../agents.js";
+import type * as audit from "../audit.js";
+import type * as auth from "../auth.js";
+import type * as bootstrap from "../bootstrap.js";
+import type * as campaign from "../campaign.js";
+import type * as crons from "../crons.js";
+import type * as lib_audit from "../lib/audit.js";
+import type * as lib_crypto from "../lib/crypto.js";
+import type * as lib_guard from "../lib/guard.js";
+import type * as lib_legal from "../lib/legal.js";
+import type * as lib_permissions from "../lib/permissions.js";
+import type * as lib_phone from "../lib/phone.js";
+import type * as lib_reserved from "../lib/reserved.js";
+import type * as maintenance from "../maintenance.js";
+import type * as signup from "../signup.js";
 import type * as tally from "../tally.js";
 import type * as tenants from "../tenants.js";
-import type * as utils from "../utils.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -27,17 +35,25 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  auth_functions: typeof auth_functions;
-  campaigns: typeof campaigns;
-  contacts: typeof contacts;
-  dashboard: typeof dashboard;
-  seed: typeof seed;
-  sms: typeof sms;
-  stations: typeof stations;
-  submissions: typeof submissions;
+  agentPortal: typeof agentPortal;
+  agents: typeof agents;
+  audit: typeof audit;
+  auth: typeof auth;
+  bootstrap: typeof bootstrap;
+  campaign: typeof campaign;
+  crons: typeof crons;
+  "lib/audit": typeof lib_audit;
+  "lib/crypto": typeof lib_crypto;
+  "lib/guard": typeof lib_guard;
+  "lib/legal": typeof lib_legal;
+  "lib/permissions": typeof lib_permissions;
+  "lib/phone": typeof lib_phone;
+  "lib/reserved": typeof lib_reserved;
+  maintenance: typeof maintenance;
+  signup: typeof signup;
   tally: typeof tally;
   tenants: typeof tenants;
-  utils: typeof utils;
+  users: typeof users;
 }>;
 
 /**

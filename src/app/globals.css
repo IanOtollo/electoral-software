@@ -1,115 +1,201 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
+
+/* Design tokens: the "authoritative trust" palette. One core hue (deep navy) across
+   its shades on a warm off-white, slate for secondary UI. Red is reserved for real
+   alerts and green for verified, so neither reads as a party colour. Components use
+   semantic names only, never raw colours. */
 :root {
-  /* Official Election Color Scheme (Kenyan context: Green, Red, Black, White) */
-  /* Upgraded for Premium Look */
-  --background: #F4F7FA; /* Slightly cooler off-white for better depth */
-  --foreground: #020617; /* Slate 950 */
-  
-  --primary: #15803D; /* Deep Green (IEBC style) */
-  --primary-foreground: #FFFFFF;
-  
-  --danger: #DC2626; /* Red for alerts/errors */
-  --danger-foreground: #FFFFFF;
+  --background: #f8f7f4;
+  --surface: #ffffff;
+  --surface-2: #f1f1e6;
+  --ink: #0b1730;
+  --muted: #46536b;
+  --subtle: #66738b;
+  --line: #dad9cf;
+  --line-strong: #b5b4a8;
 
-  --panel: #FFFFFF;
-  --panel-foreground: #020617;
+  /* The desk bar: deep navy in both themes */
+  --desk: #00246b;
+  --desk-2: #1b3a80;
+  --desk-foreground: #ffffff;
+  --desk-muted: #a9b8d8;
 
-  --civic-ink: #020617;
-  --civic-panel: #0F172A;
-  --civic-brass: #D97706; /* Amber/Gold for official highlights */
-  
-  --radius: 0.75rem;
+  --primary: #00246b;
+  --primary-hover: #001a4f;
+  --primary-foreground: #ffffff;
+  --primary-soft: #e4eaf5;
+
+  --danger: #b3261e;
+  --danger-soft: #fbe9e7;
+  --warning: #8a5300;
+  --warning-soft: #fbf0dc;
+  --success: #16653d;
+  --success-soft: #e3f1e8;
+  --info: #07508f;
+  --info-soft: #e3eef8;
+
+  --radius: 0.25rem;
+  /* Height of the permanent election countdown bar; sticky layouts offset by this. */
+  --banner-h: 2.5rem;
+  --shadow-card: none;
+  --shadow-pop: 0 12px 32px -8px rgb(0 20 60 / 0.25), 0 2px 6px rgb(0 20 60 / 0.1);
+}
+
+.dark {
+  --background: #07101f;
+  --surface: #0d1a30;
+  --surface-2: #14233e;
+  --ink: #eaf0fa;
+  --muted: #9fb0cc;
+  --subtle: #8294b3;
+  --line: #1f3050;
+  --line-strong: #2e446b;
+
+  --desk: #040b17;
+  --desk-2: #1b3a80;
+  --desk-foreground: #ffffff;
+  --desk-muted: #8d9ab0;
+
+  --primary: #a9c1f0;
+  --primary-hover: #c4d5f6;
+  --primary-foreground: #00183f;
+  --primary-soft: #16284a;
+
+  --danger: #ff6b62;
+  --danger-soft: #2b1411;
+  --warning: #e2a14a;
+  --warning-soft: #2a1f0e;
+  --success: #4cc690;
+  --success-soft: #0f2a1d;
+  --info: #7fb4ea;
+  --info-soft: #11263d;
+
+  --shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.7), 0 2px 6px rgb(0 0 0 / 0.5);
 }
 
 @theme inline {
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-desk: var(--desk);
+  --color-desk-2: var(--desk-2);
+  --color-desk-foreground: var(--desk-foreground);
+  --color-desk-muted: var(--desk-muted);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
-  
+  --color-primary-soft: var(--primary-soft);
   --color-danger: var(--danger);
-  --color-danger-foreground: var(--danger-foreground);
-  
-  --color-panel: var(--panel);
-  --color-panel-foreground: var(--panel-foreground);
-  
-  --color-civic-ink: var(--civic-ink);
-  --color-civic-panel: var(--civic-panel);
-  --color-civic-brass: var(--civic-brass);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
 
-  --font-heading: var(--font-inter), "Inter", sans-serif;
-  --font-sans: var(--font-dm-sans), "DM Sans", sans-serif;
-  --font-mono: var(--font-dm-mono), "DM Mono", monospace;
-  
+  --font-sans: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+
   --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: var(--radius);
+  --radius-sm: var(--radius);
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020617; /* Slate 950 base */
-    --foreground: #F8FAFC; /* Off-white text */
-    
-    --primary: #22C55E; /* Bright green */
-    --primary-foreground: #020617;
-
-    --panel: #0F172A; /* Slate 900 */
-    --panel-foreground: #F8FAFC;
-  }
+html {
+  color-scheme: light;
+  /* Jost sets small for its size, so the whole rem scale runs ~6% larger. */
+  font-size: 106.25%;
+}
+html.dark {
+  color-scheme: dark;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background: var(--background);
+  color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Numerals should always use DM Mono across the app */
-.tabular-nums, .number-font {
-  font-family: var(--font-mono);
-  font-feature-settings: "tnum", "zero";
+/* Tabular figures wherever numbers are compared. */
+.tnum {
+  font-variant-numeric: tabular-nums;
 }
 
-/* Custom Scrollbar for a premium feel */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.1);
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.2);
-}
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-thumb {
-    background: rgba(248, 250, 252, 0.1);
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(248, 250, 252, 0.2);
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-/* Premium Layout Utilities */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+/* Candidate fills: distinguished by pattern as well as tone, so they stay readable without colour. */
+.fill-0 { background: var(--ink); }
+.fill-1 { background: repeating-linear-gradient(45deg, var(--ink) 0 4px, var(--surface) 4px 7px); }
+.fill-2 { background: radial-gradient(circle, var(--surface) 1.2px, transparent 1.4px) 0 0 / 6px 6px, var(--ink); }
+.fill-3 { background: repeating-linear-gradient(90deg, var(--ink) 0 3px, var(--surface) 3px 7px); }
+.fill-4 { background: var(--subtle); }
+
+/* Coverage wall: squares fill in as a quick wave when the wall appears. */
+@keyframes cell-in {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: scale(1); }
 }
-@media (prefers-color-scheme: dark) {
-  .glass-panel {
-    background: rgba(15, 23, 42, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+.wall-cell { animation: cell-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ---- Motion: enhancement only. Content is always in the HTML and visible. ---- */
+@keyframes page-in {
+  from { opacity: 0.001; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.page-in { animation: page-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes item-in {
+  from { opacity: 0.001; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.stagger > * { animation: item-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.stagger > *:nth-child(2) { animation-delay: 0.07s; }
+.stagger > *:nth-child(3) { animation-delay: 0.14s; }
+.stagger > *:nth-child(4) { animation-delay: 0.21s; }
+.stagger > *:nth-child(5) { animation-delay: 0.28s; }
+.stagger > *:nth-child(6) { animation-delay: 0.35s; }
+.stagger > *:nth-child(n + 7) { animation-delay: 0.42s; }
+
+@keyframes bar-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.grow-bar { transform-origin: left; animation: bar-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
+
+/* Scroll-driven reveal where the browser supports it; elsewhere the content simply shows. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: item-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-in, .stagger > *, .grow-bar, .reveal, .wall-cell { animation: none !important; }
+}
+
+/* Sign-in / create-account swap: the new side eases in. */
+@keyframes auth-swap-in { from { opacity: 0.001; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.auth-swap { animation: auth-swap-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@media (prefers-reduced-motion: reduce) { .auth-swap { animation: none !important; } }
