@@ -1,16 +1,9 @@
+import { BrandMark } from "@/components/brand/brand-mark";
 import Link from "next/link";
 
-/** Interim mark: four strokes and a gate, the universal tally. Replaced by the final logo in the brand step. */
+/** The mark on the navy desk bar (white tile). */
 export function TallyMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 34 34" className={className} aria-hidden="true">
-      <rect width="34" height="34" fill="#ffffff" />
-      <g stroke="#00246b" strokeWidth="3" strokeLinecap="square">
-        <path d="M9 8v18M15 8v18M21 8v18M27 8v18" />
-      </g>
-      <path d="M5 22L31 12" stroke="#16653d" strokeWidth="3" />
-    </svg>
-  );
+  return <BrandMark variant="inverse" className={className} />;
 }
 
 export function SiteHeader() {

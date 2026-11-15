@@ -5,6 +5,7 @@ import { ConvexError, v } from "convex/values";
 import { authorize } from "./lib/guard";
 import { audit } from "./lib/audit";
 import { randomToken, sha256Hex } from "./lib/crypto";
+import { searchAudit } from "./lib/auditSearch";
 
 const fail = (message: string) => new ConvexError({ code: "BAD_REQUEST", message });
 const DAY = 24 * 60 * 60 * 1000;
@@ -45,7 +46,7 @@ export const overview = query({
       status[t.status]++;
       credits += t.smsCredits ?? 0;
     }
-    const users = await ctx.db.query("users").take(5001);
+    const users = (await ctx.db.query("users").take(5001)).filter((u) => u.role !== "super_admin"); // platform admins are not counted
     const roles: Record<string, number> = {};
     for (const u of users) roles[u.role] = (roles[u.role] ?? 0) + 1;
 
@@ -127,7 +128,7 @@ export const users = query({
   args: {},
   handler: async (ctx) => {
     await authorize(ctx, "tenants:manage");
-    const rows = await ctx.db.query("users").order("desc").take(500);
+    const rows = (await ctx.db.query("users").order("desc").take(500)).filter((u) => u.role !== "super_admin");
     const n = await names(ctx, [], rows.map((r) => r.tenantId));
     return rows.map((u) => ({ id: u._id, name: u.name, email: u.email, role: u.role, status: u.status, workspace: n.tenant(u.tenantId), workspaceId: u.tenantId ?? null, lastLoginAt: u.lastLoginAt ?? null, createdAt: u.createdAt }));
   },
@@ -232,6 +233,69 @@ export const auditAll = query({
     const rows = (await base.order("desc").take(args.action ? 1500 : limit)).filter((r) => !args.action || r.action.startsWith(args.action)).slice(0, limit);
     const n = await names(ctx, rows.map((r) => r.actorId), rows.map((r) => r.tenantId));
     return rows.map((r) => ({ id: r._id, action: r.action, actor: n.user(r.actorId), workspace: n.tenant(r.tenantId), metadata: r.metadata ?? null, createdAt: r.createdAt }));
+  },
+});
+
+/** Filtered, paged search across every workspace (platform administrators only). */
+export const auditSearch = query({
+  args: {
+    workspace: v.optional(v.union(v.id("tenants"), v.literal("platform"))),
+    group: v.optional(v.string()),
+    actorId: v.optional(v.id("users")),
+    text: v.optional(v.string()),
+    from: v.optional(v.number()),
+    to: v.optional(v.number()),
+    before: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await authorize(ctx, "tenants:manage");
+    return await searchAudit(ctx, {
+      scope: "all",
+      tenantId: args.workspace === "platform" ? null : args.workspace,
+      group: args.group,
+      actorId: args.actorId,
+      text: args.text,
+      from: args.from,
+      to: args.to,
+      before: args.before,
+    });
+  },
+});
+
+/** Counts by kind over a period, for the summary strip. Reads at most 4000 entries and says when it stopped early. */
+export const auditSummary = query({
+  args: { from: v.optional(v.number()), to: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    await authorize(ctx, "tenants:manage");
+    const upper = (args.to ?? Number.MAX_SAFE_INTEGER - 2) + 1;
+    const rows = await ctx.db.query("audit_log").withIndex("by_time", (q) => q.gte("createdAt", args.from ?? 0).lt("createdAt", upper)).order("desc").take(4001);
+    const byKind: Record<string, number> = {};
+    let failures = 0;
+    for (const r of rows.slice(0, 4000)) {
+      const k = r.action.split(".")[0];
+      byKind[k] = (byKind[k] ?? 0) + 1;
+      if (r.action === "auth.login_failed" || r.action === "agent.sign_in_failed" || r.action.endsWith("locked")) failures++;
+    }
+    return { total: Math.min(rows.length, 4000), approximate: rows.length > 4000, byKind, failures };
+  },
+});
+
+/** Exporting the log is itself recorded. */
+export const logExport = mutation({
+  args: { entries: v.number(), filters: v.string() },
+  handler: async (ctx, args) => {
+    const { user } = await authorize(ctx, "tenants:manage");
+    await audit(ctx, { actorId: user._id, action: "platform.audit_exported", entityType: "audit_log", entityId: "platform", metadata: { entries: args.entries, filters: args.filters.slice(0, 300) } });
+  },
+});
+
+/** The people who can appear as actors, for the filter. */
+export const auditActors = query({
+  args: {},
+  handler: async (ctx) => {
+    await authorize(ctx, "tenants:manage");
+    const rows = await ctx.db.query("users").take(500);
+    return rows.map((u) => ({ id: u._id, name: u.name, email: u.email, role: u.role })).sort((a, b) => a.name.localeCompare(b.name));
   },
 });
 

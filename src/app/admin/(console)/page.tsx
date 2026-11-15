@@ -69,7 +69,7 @@ export default function AdminOverview() {
 
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Platform figures">
             <Figure label="Workspaces" value={nf.format(o.workspaces.total)} note={`${o.workspaces.active} active · ${o.workspaces.trial} trial · ${o.workspaces.newThisWeek} new this week`} href="/admin/workspaces" />
-            <Figure label="People" value={nf.format(o.users.total)} note={Object.entries(o.users.byRole).map(([r, n]) => `${n} ${r.replace(/_/g, " ")}`).join(" · ")} href="/admin/users" />
+            <Figure label="Users" value={nf.format(o.users.total)} note={Object.entries(o.users.byRole).map(([r, n]) => `${n} ${r.replace(/_/g, " ")}`).join(" · ")} href="/admin/users" />
             <Figure label="Field agents" value={nf.format(o.field.agents)} note={`${nf.format(o.field.stationsAssigned)} stations assigned`} />
             <Figure label="Stations reported" value={nf.format(o.field.stationsReported)} note={`of ${nf.format(o.field.stationsAssigned)} assigned across campaigns`} />
             <Figure label="Flagged results" value={nf.format(o.field.flagged)} note="Need a human check" />

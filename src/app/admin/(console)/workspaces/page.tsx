@@ -37,7 +37,7 @@ export default function WorkspacesPage() {
       <PageHeader
         kicker="Platform"
         title="Workspaces"
-        description="Every campaign on the platform. Open one to manage its plan, credits, people and access."
+        description="Every campaign on the platform. Open one to manage its plan, credits, users and access."
         actions={
           <Button onClick={() => setCreating(true)}>
             <Plus className="size-4" /> New workspace
@@ -75,7 +75,7 @@ export default function WorkspacesPage() {
                 <tr>
                   <th className="px-5 py-3 font-medium">Workspace</th>
                   <th className="px-5 py-3 font-medium">Status</th>
-                  <th className="px-5 py-3 text-right font-medium">People</th>
+                  <th className="px-5 py-3 text-right font-medium">Users</th>
                   <th className="px-5 py-3 text-right font-medium">Agents</th>
                   <th className="px-5 py-3 text-right font-medium">Stations in</th>
                   <th className="px-5 py-3 text-right font-medium">Flagged</th>

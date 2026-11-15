@@ -73,7 +73,7 @@ export default function WorkspaceDetailPage() {
 
       <section className="mb-8 grid border-y border-line sm:grid-cols-2 lg:grid-cols-5" aria-label="Figures">
         {[
-          ["People", `${data.users.filter((u) => u.status === "active").length}`, `${data.users.length} accounts`],
+          ["Users", `${data.users.filter((u) => u.status === "active").length}`, `${data.users.length} accounts`],
           ["Agents", `${data.figures.agentsActive}`, `${data.figures.agents} in total`],
           ["Stations reported", `${nf.format(data.figures.stationsReported)}`, `of ${nf.format(data.figures.stationsAssigned)} assigned`],
           ["Flagged", `${data.figures.flagged}`, "results to check"],
@@ -93,7 +93,7 @@ export default function WorkspaceDetailPage() {
       </div>
 
       <section className="mt-10">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted">People</h2>
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted">Users</h2>
         <PeopleTable users={data.users} run={run} onLink={(token, email) => setLink({ title: `Password reset for ${email}`, token, path: "/reset", note: "Send this to the person privately. It works once, expires in 24 hours, and signs them out everywhere when used." })} />
       </section>
 
@@ -360,7 +360,7 @@ function DangerZone({ tenantId, name, onError }: { tenantId: Id<"tenants">; name
     <section className="mt-12 border border-danger/40 p-5">
       <h2 className="text-sm font-semibold text-danger">Close this account</h2>
       <p className="mt-1 max-w-2xl text-sm text-muted">
-        Permanently deletes the workspace and everything in it: people, agents, results and photos, contacts and messages. Access stops at once and the rest is removed in the background. This cannot be undone.
+        Permanently deletes the workspace and everything in it: users, agents, results and photos, contacts and messages. Access stops at once and the rest is removed in the background. This cannot be undone.
       </p>
       <Button variant="danger" className="mt-4" onClick={() => setOpen(true)}>Delete workspace</Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Delete this workspace?" description={done ? undefined : `Type "${name}" to confirm.`}>

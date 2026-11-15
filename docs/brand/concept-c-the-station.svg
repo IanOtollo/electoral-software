@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" role="img" aria-label="Concept C: The Station">
+  <rect width="320" height="120" fill="#f7f6f2"/>
+  <g transform="translate(24 20)">
+    <path d="M36 0C18 0 6 13 6 30c0 20 24 42 30 48 6-6 30-28 30-48C66 13 54 0 36 0z" fill="#00246b"/>
+    <g fill="#ffffff"><rect x="23" y="18" width="5" height="26"/><rect x="31" y="18" width="5" height="26"/><rect x="39" y="18" width="5" height="26"/></g>
+    <path d="M19 38L53 24" stroke="#4cc690" stroke-width="5"/>
+  </g>
+  <text x="112" y="56" font-family="Jost, Arial, sans-serif" font-size="19" font-weight="600" fill="#0b1730">Campaign</text>
+  <text x="112" y="80" font-family="Jost, Arial, sans-serif" font-size="19" font-weight="600" fill="#0b1730">Management System</text>
+</svg>

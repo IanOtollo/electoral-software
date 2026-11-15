@@ -2,6 +2,7 @@ import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/s
 import type { Doc } from "./_generated/dataModel";
 import { ConvexError, v } from "convex/values";
 import { randomToken, sha256Hex, verifyPassword } from "./lib/crypto";
+import { audit } from "./lib/audit";
 
 const SESSION_TTL = 1000 * 60 * 60 * 12;
 const MAX_PIN_FAILURES = 5;
@@ -50,14 +51,19 @@ async function unlockInner(
   if (!valid) {
     const failures = agent.pinFailures + 1;
     await ctx.db.patch(agent._id, { pinFailures: failures, lockedUntil: failures >= MAX_PIN_FAILURES ? now + LOCK_MS : undefined });
+    await audit(ctx, { tenantId: agent.tenantId, action: failures >= MAX_PIN_FAILURES ? "agent.locked" : "agent.sign_in_failed", entityType: "agents", entityId: agent._id, metadata: { agent: agent.name, reason: "wrong_pin", attempts: failures } });
     return { ok: false as const, reason: "invalid" as const };
   }
   const deviceHash = await sha256Hex(args.deviceId);
-  if (agent.deviceHash && agent.deviceHash !== deviceHash) return { ok: false as const, reason: "other_device" as const };
+  if (agent.deviceHash && agent.deviceHash !== deviceHash) {
+    await audit(ctx, { tenantId: agent.tenantId, action: "agent.sign_in_failed", entityType: "agents", entityId: agent._id, metadata: { agent: agent.name, reason: "other_device" } });
+    return { ok: false as const, reason: "other_device" as const };
+  }
 
   await ctx.db.patch(agent._id, { pinFailures: 0, lockedUntil: undefined, deviceHash, lastSeenAt: now });
   const session = randomToken(24);
   await ctx.db.insert("agent_sessions", { agentId: agent._id, tokenHash: await sha256Hex(session), expiresAt: now + SESSION_TTL });
+  await audit(ctx, { tenantId: agent.tenantId, action: "agent.signed_in", entityType: "agents", entityId: agent._id, metadata: { agent: agent.name, firstDevice: !agent.deviceHash } });
   return { ok: true as const, session };
 }
 
@@ -153,6 +159,10 @@ export const submit = mutation({
       submittedAt: Date.now(),
     });
     await ctx.db.patch(agent._id, { lastSeenAt: Date.now() });
+    await audit(ctx, {
+      tenantId: agent.tenantId, action: previous.length > 0 ? "result.corrected" : "result.submitted", entityType: "stations", entityId: args.stationCode,
+      metadata: { agent: agent.name, station: station.name, totalValid, rejected: args.rejected, version: previous.length + 1, flags },
+    });
     return { ok: true as const, flags, version: previous.length + 1 };
   },
 });

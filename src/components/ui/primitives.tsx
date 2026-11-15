@@ -141,7 +141,7 @@ export function PageHeader({ title, kicker, description, actions }: { title: str
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-md bg-surface-2", className)} />;
+  return <div className={cn("animate-pulse rounded-md bg-surface-2 motion-reduce:animate-none", className)} />;
 }
 
 export function EmptyState({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {

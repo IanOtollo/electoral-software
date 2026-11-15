@@ -1,15 +1,16 @@
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/brand/brand-mark";
 
-/**
- * Single place the brand lives. Interim wordmark: swapped for the final mark in
- * the brand phase without touching any page.
- */
+/** The brand lockup for light surfaces: the mark and the name. One place, so every page stays in step. */
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={cn("text-sm font-semibold leading-tight tracking-tight text-ink", className)}>
-      Campaign
-      <br />
-      Management System
+    <span className={cn("flex items-center gap-2.5 text-sm font-semibold leading-tight tracking-tight text-ink", className)}>
+      <BrandMark className="size-7 shrink-0" />
+      <span>
+        Campaign
+        <br />
+        Management System
+      </span>
     </span>
   );
 }

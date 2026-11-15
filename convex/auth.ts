@@ -54,6 +54,11 @@ export const login = mutation({
       };
       if (attempt) await ctx.db.patch(attempt._id, patch);
       else await ctx.db.insert("login_attempts", { key, ...patch });
+      if (user) {
+        const why = !valid ? "wrong_password" : user.status !== "active" ? "account_suspended" : "wrong_sign_in_form";
+        await audit(ctx, { tenantId: user.tenantId, actorId: user._id, action: "auth.login_failed", entityType: "users", entityId: user._id, metadata: { reason: why, attempts: failures } });
+        if (failures === MAX_FAILURES) await audit(ctx, { tenantId: user.tenantId, actorId: user._id, action: "auth.locked", entityType: "users", entityId: user._id, metadata: { minutes: Math.round(LOCK_MS / 60000) } });
+      }
       return { ok: false as const, reason: "invalid" as const };
     }
 

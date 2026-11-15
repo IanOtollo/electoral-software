@@ -19,6 +19,7 @@ import type * as contacts from "../contacts.js";
 import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as lib_audit from "../lib/audit.js";
+import type * as lib_auditSearch from "../lib/auditSearch.js";
 import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_guard from "../lib/guard.js";
 import type * as lib_legal from "../lib/legal.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   http: typeof http;
   "lib/audit": typeof lib_audit;
+  "lib/auditSearch": typeof lib_auditSearch;
   "lib/crypto": typeof lib_crypto;
   "lib/guard": typeof lib_guard;
   "lib/legal": typeof lib_legal;

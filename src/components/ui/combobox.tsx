@@ -20,6 +20,7 @@ export function Combobox({
   children,
   disabled,
   className,
+  id,
   "aria-label": ariaLabel,
 }: {
   value: string;
@@ -27,6 +28,7 @@ export function Combobox({
   children: ReactNode;
   disabled?: boolean;
   className?: string;
+  id?: string;
   "aria-label"?: string;
 }) {
   const uid = useId();
@@ -112,6 +114,7 @@ export function Combobox({
     <div ref={root} className={cn("relative h-11 w-full", className)}>
       <input
         ref={input}
+        id={id}
         type="text"
         role="combobox"
         aria-label={ariaLabel}
