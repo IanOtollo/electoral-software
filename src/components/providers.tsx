@@ -4,7 +4,12 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { ThemeProvider } from "./ThemeProvider";
 
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+// If the backend address is missing (for example a preview build without its variables), the public pages
+// still build and work; only the parts that need the backend are unavailable. A missing address is reported
+// loudly in the browser console instead of failing the whole deployment.
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+const convex = convexUrl ? new ConvexReactClient(convexUrl) : null;
+if (!convex && typeof window !== "undefined") console.error("NEXT_PUBLIC_CONVEX_URL is not set. Sign-in and workspaces are unavailable.");
 
 /**
  * The browser never sees the session cookie (httpOnly). It asks our server for a
@@ -39,9 +44,13 @@ function useCookieAuth() {
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
-      <ConvexProviderWithAuth client={convex} useAuth={useCookieAuth}>
-        {children}
-      </ConvexProviderWithAuth>
+      {convex ? (
+        <ConvexProviderWithAuth client={convex} useAuth={useCookieAuth}>
+          {children}
+        </ConvexProviderWithAuth>
+      ) : (
+        children
+      )}
     </ThemeProvider>
   );
 }
